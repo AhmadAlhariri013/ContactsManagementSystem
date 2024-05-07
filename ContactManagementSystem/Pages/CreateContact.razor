@@ -1,0 +1,108 @@
+﻿@using ContactManagementSystem.Service
+@using System.Text.RegularExpressions
+@using global::Shared.Models
+@inject ContactService ContactService
+@inject ContactService ContactService
+@inject NavigationManager NavigationManager
+@page "/createcontcat"
+@code
+{
+    private List<Contact> allContacts;
+    private Contact newContact = new Contact();
+    private bool isInvalid = false;
+    private string validationErrorMessage = "";
+    private readonly string phoneNumberFormat = @"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$"; // phone number format 
+
+    protected override async Task OnInitializedAsync()
+    {
+        allContacts = ContactService.GetContacts("FirstName",true);
+    }
+
+    private bool ValidateContact()
+    {
+        isInvalid = false;
+        validationErrorMessage = "";
+
+        if (string.IsNullOrEmpty(newContact.FirstName) )
+        {
+            isInvalid = true;
+            validationErrorMessage = "Please enter a first name.";
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(newContact.LastName))
+        {
+            isInvalid = true;
+            validationErrorMessage = "Please enter a last name.";
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(newContact.Email) || !newContact.Email.Contains("@"))
+        {
+            isInvalid = true;
+            validationErrorMessage = "Please enter a valid email address.";
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(newContact.PhoneNumber) || !Regex.IsMatch(newContact.PhoneNumber, phoneNumberFormat))
+        {
+            validationErrorMessage = "Please enter a valid phone number.";
+        }
+
+        return !isInvalid;
+    }
+
+    private void HandleSubmit()
+    {
+        if (ValidateContact()) // Validate before adding contact
+        {
+            ContactService.CreateContact(newContact);
+            newContact = new Contact(); // Clear form after submission
+            allContacts = ContactService.GetContacts("FirstName", false); // Refresh contact list
+            NavigationManager.NavigateTo("/contacts"); // Redirect back to contact list
+
+        }
+    }
+}
+
+
+<EditForm Model="@newContact" OnValidSubmit="HandleSubmit">
+     <ObjectGraphDataAnnotationsValidator />
+    <h3>Add New Contact</h3>
+    <hr />
+    <ValidationSummary />
+    <div class="form-group">
+        <label for="firstName">First Name:</label>
+        <input type="text" class="form-control" id="firstName" @bind="newContact.FirstName" required>
+        @if (isInvalid && string.Equals(validationErrorMessage, "Please enter a first name."))
+        {
+            <span class="text-danger">@validationErrorMessage</span>
+        }
+    </div>
+    <div class="form-group">
+        <label for="lastName">Last Name:</label>
+        <input type="text" class="form-control" id="lastName" @bind="newContact.LastName" required>
+        @if (isInvalid && string.Equals(validationErrorMessage, "Please enter a last name."))
+        {
+            <span class="text-danger">@validationErrorMessage</span>
+        }
+    </div>
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" class="form-control" id="email" @bind="newContact.Email" required>
+        @if (isInvalid && string.Equals(validationErrorMessage, "Please enter an email address."))
+        {
+            <span class="text-danger">@validationErrorMessage</span>
+        }
+    </div>
+    <div class="form-group">
+        <label for="phoneNumber">Phone Number:</label>
+        <input type="tel" class="form-control" id="phoneNumber" @bind="newContact.PhoneNumber">
+        @if (isInvalid && (string.Equals(validationErrorMessage, "Please enter a phone number.") ||
+        !string.IsNullOrEmpty(phoneNumberFormat) && !Regex.IsMatch(newContact.PhoneNumber, phoneNumberFormat)))
+        {
+            <span class="text-danger">@validationErrorMessage</span>
+        }
+    </div>
+    <button type="submit" class="btn btn-primary" disabled="@isInvalid">Add Contact</button>
+</EditForm>

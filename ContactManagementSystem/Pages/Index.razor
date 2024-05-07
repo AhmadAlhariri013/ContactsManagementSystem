@@ -1,0 +1,176 @@
+﻿@page "/contacts"
+
+@using ContactManagementSystem.Service
+@using global::Shared.Models
+@inject ContactService ContactService
+@inject NavigationManager NavigationManager
+
+@code
+{
+
+    private List<Contact> allContacts;
+    private Contact newContact = new Contact();
+    private List<Contact> filteredContacts; // List after filtering
+    private ContactSortModel sortModel = new ContactSortModel();
+    private ContactFilterModel filterModel = new ContactFilterModel();
+    private Contact selectedContactForDelete;
+    private bool isDeleteModalVisible = false;
+    private List<string> sortOptions = new List<string>() { "FirstName", "LastName" }; // Available sorting field
+
+    protected override async Task OnInitializedAsync()
+    {
+        allContacts = ContactService.GetContacts("FirstName", true);
+        filteredContacts = allContacts; // Initially show all contacts
+    }
+
+    private void ShowDeleteConfirmation(Contact contact)
+    {
+        isDeleteModalVisible = true;
+        selectedContactForDelete = contact;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        ContactService.DeleteContact(selectedContactForDelete.Id);
+        allContacts = ContactService.GetContacts("FirstName", true); // Refresh contact list
+        isDeleteModalVisible = false;
+        selectedContactForDelete = null; // Clear selected contact
+    }
+
+    private void CloseDeleteModal()
+    {
+        isDeleteModalVisible = false;
+        selectedContactForDelete = null; // Clear selected contact
+    }
+
+    private void ShowEditModal(Contact contact)
+    {
+        NavigationManager.NavigateTo($"/editcontact/{contact.Id}"); // Route to edit page with contact ID
+    }
+
+    private async Task HandleCreateSubmit()
+    {
+        NavigationManager.NavigateTo($"/createcontcat"); // Route to edit page with contact ID
+    }
+
+    private void HandleSort(string sortBy)
+    {
+        sortModel.SortBy = sortBy;
+        sortModel.Descending = !sortModel.Descending;
+        allContacts = ContactService.GetContacts(sortModel.SortBy, sortModel.Descending);
+    }
+
+    private void HandleFilterChange(string searchTerm)
+    {
+        filterModel.SearchTerm = searchTerm;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrEmpty(filterModel.SearchTerm))
+        {
+            filteredContacts = allContacts; // No filter applied, show all contacts
+            return;
+        }
+
+        filteredContacts = allContacts.Where(c => c.FirstName.ToLower().Contains(filterModel.SearchTerm.ToLower()) || c.LastName.ToLower().Contains(filterModel.SearchTerm.ToLower())).ToList();
+    }
+}
+
+<h1>Contacts</h1>
+<input type="text" @bind-value="@filterModel.SearchTerm" @onkeyup="@(() => HandleFilterChange(filterModel.SearchTerm))" placeholder="Search by Name..." class="form-control mb-2">
+<button type="button" class="btn btn-primary" @onclick="@HandleCreateSubmit">Add Contact</button>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <select @onchange="@(e => HandleSort(""+e.Value))" class="form-control form-control-sm">
+                    <option value="">Sort By</option>
+                    @foreach (var option in sortOptions)
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+                @if (sortModel.SortBy == "FirstName")
+                {
+                    <span>
+                        @if (sortModel.Descending)
+                        {
+                            <i class="fas fa-sort-down"></i>
+                        }
+                        else
+                        {
+                            <i class="fas fa-sort-up"></i>
+                        }
+                    </span>
+                }
+                else if (sortModel.SortBy == "LastName")
+                {
+                    <span>
+                        @if (sortModel.Descending)
+                        {
+                            <i class="fas fa-sort-down"></i>
+                        }
+                        else
+                        {
+                            <i class="fas fa-sort-up"></i>
+                        }
+                    </span>
+                }
+            </th>
+            <th>
+                <select @onchange="@(e => HandleSort(e.Value + " desc"))" class="form-control form-control-sm">
+                    <option value="">Direction</option>
+                    <option value="">Ascending</option>
+                    <option value="">Descending</option>
+                </select>
+            </th>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Phone Number</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var contact in allContacts)
+        {
+            <tr>
+                <td>@contact.Id</td>
+                <td>@contact.FirstName</td>
+                <td>@contact.LastName</td>
+                <td>@contact.Email</td>
+                <td>@contact.PhoneNumber</td>
+                <td>
+                    <button class="btn btn-success btn-sm" @onclick="@(() => ShowEditModal(contact))">Edit</button>
+                    <button class="btn btn-danger btn-sm" @onclick="@(() => ShowDeleteConfirmation(contact))">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (isDeleteModalVisible)
+{
+    <div class="modal fade show d-block" id="deleteConfirmationModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close" @onclick="@CloseDeleteModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete @selectedContactForDelete?.FirstName @selectedContactForDelete?.LastName?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="@CloseDeleteModal">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="@ConfirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+

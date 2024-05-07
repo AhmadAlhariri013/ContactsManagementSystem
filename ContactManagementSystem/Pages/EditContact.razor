@@ -1,0 +1,108 @@
+﻿@using ContactManagementSystem.Service
+@using System.Reflection.Metadata
+@using global::Shared.Models
+@inject ContactService ContactService
+@inject NavigationManager NavigationManager
+@page "/editcontact/{ContactId:int}"
+
+
+@code
+{
+
+    private Contact contact;
+    [Parameter]
+    public int ContactId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {   
+      
+        contact = ContactService.GetContactById(ContactId);
+    }
+
+    private async Task HandleEditSubmit(Contact editedContact)
+    {
+        var result = ContactService.UpdateContact(editedContact);
+        if (result != null)
+        {
+            NavigationManager.NavigateTo("/contacts");
+        }
+    }
+}
+
+
+<EditForm Model="@contact" OnValidSubmit="@(() => HandleEditSubmit(contact))">
+        <DataAnnotationsValidator />
+  <h3>Edit Employee</h3>
+  <hr />
+  <ValidationSummary />
+    <div class="form-group row">
+        <label for="firstName" class="col-sm-2 col-form-label">
+            First Name
+        </label>
+        <div class="col-sm-10">
+            <InputText id="firstName" class="form-control" placeholder="First Name"
+                       @bind-Value="@contact.FirstName" />
+            <ValidationMessage For="@(()=>@contact.FirstName)" />
+        </div>
+  </div>
+
+    <div class="form-group row">
+        <label for="lastName" class="col-sm-2 col-form-label">
+            Last Name
+        </label>
+        <div class="col-sm-10">
+            <InputText id="lastName" class="form-control" placeholder="Last Name"
+                       @bind-Value="@contact.LastName" />
+            <ValidationMessage For="@(() => @contact.LastName)" />
+        </div>
+  </div>
+
+    <div class="form-group row">
+        <label for="email" class="col-sm-2 col-form-label">
+            Email
+        </label>
+        <div class="col-sm-10">
+            <InputText id="email" class="form-control" placeholder="Email"
+                       @bind-Value="@contact.Email" />
+            <ValidationMessage For="@(() => @contact.Email)" />
+        </div>
+  </div>
+
+  <div class="form-group row">
+        <label for="email" class="col-sm-2 col-form-label">
+            Phone Number
+        </label>
+        <div class="col-sm-10">
+            <InputText id="email" class="form-control" placeholder="Email"
+                       @bind-Value="@contact.PhoneNumber" />
+            <ValidationMessage For="@(() => contact.PhoneNumber)" />
+        </div>
+  </div>
+    <button class="btn btn-primary" type="submit">Submit</button>
+</EditForm>
+
+@* <EditForm Model="@contact" OnValidSubmit="@HandleEditSubmit">
+  <DataAnnotationsValidator />
+  <div class="form-group">
+    <label for="firstName">First Name:</label>
+    <InputText id="firstName" class="form-control" @bind-Value="@contact.FirstName" />
+    <ValidationMessage for="@contact.FirstName" />
+  </div>
+  <div class="form-group">
+    <label for="lastName">Last Name:</label>
+    <InputText id="lastName" class="form-control" @bind-Value="@contact.LastName" />
+    <ValidationMessage for="@contact.LastName" />
+  </div>
+  <div class="form-group">
+    <label for="email">Email:</label>
+    <InputText id="email" class="form-control" @bind-Value="@contact.Email" />
+    <ValidationMessage for="@contact.Email" />
+  </div>
+  <div class="form-group">
+    <label for="phoneNumber">Phone Number:</label>
+    <InputText id="phoneNumber" class="form-control" @bind-Value="@contact.PhoneNumber" />
+    <ValidationMessage for="@contact.PhoneNumber" />
+  </div>
+  <button type="submit" class="btn btn-primary">Save</button>
+</EditForm> *@
+

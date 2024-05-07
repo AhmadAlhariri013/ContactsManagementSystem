@@ -1,0 +1,34 @@
+﻿@using ContactManagementSystem.Service
+@using global::Shared.Models
+@inject ContactService ContactService
+
+@code
+{
+    private List<Contact> allContacts;
+
+    protected override async Task OnInitializedAsync() => allContacts = ContactService.GetContacts("FirstName", true);
+}
+
+<h1>Contacts</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Phone Number</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var contact in allContacts)
+        {
+            <tr>
+                <td>@contact.Id</td>
+                <td>@contact.LastName</td>
+                <td>@contact.Email</td>
+                <td>@contact.PhoneNumber</td>
+            </tr>
+        }
+    </tbody>
+</table>
